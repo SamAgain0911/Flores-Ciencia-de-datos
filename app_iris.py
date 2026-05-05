@@ -50,13 +50,12 @@ st.markdown(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @st.cache_resource
-def load_models():
-    model   = joblib.load(os.path.join(BASE_DIR, "neural_network_model.joblib"))
-    encoder = joblib.load(os.path.join(BASE_DIR, "label_encoder_bien.joblib"))
-    return model, encoder
+def load_model():
+    model = joblib.load(os.path.join(BASE_DIR, "neural_network_model.joblib"))
+    return model
 
 try:
-    loaded_model, label_encoder = load_models()
+    loaded_model = load_model()
     st.success("✅ Modelo cargado correctamente · Listo para predecir")
 except FileNotFoundError as e:
     st.error("❌ Archivo no encontrado: " + str(e))
@@ -64,6 +63,13 @@ except FileNotFoundError as e:
 except Exception as e:
     st.error("❌ Error inesperado: " + str(e))
     st.stop()
+
+# Índice 0 = setosa, 1 = versicolor, 2 = virginica (orden del dataset UCI Iris)
+SPECIES_INFO = {
+    0: {"scientific": "Iris setosa",     "common": "Lirio cerda · Flores pequeñas, sépalos anchos", "emoji": "🌸"},
+    1: {"scientific": "Iris versicolor", "common": "Lirio bandera azul · Tamaño intermedio",         "emoji": "🌺"},
+    2: {"scientific": "Iris virginica",  "common": "Lirio virginiano · La especie más grande",        "emoji": "🌷"},
+}
 
 st.sidebar.markdown(
     "<div style='text-align:center; padding:10px 0 20px 0;'>"
@@ -87,29 +93,10 @@ col2.metric("Sépalo ancho", f"{sepal_width} cm")
 col3.metric("Pétalo largo", f"{petal_length} cm")
 col4.metric("Pétalo ancho", f"{petal_width} cm")
 
-SPECIES_INFO = {
-    "setosa": {
-        "scientific": "Iris setosa",
-        "common": "Lirio cerda · Flores pequeñas, sépalos anchos",
-        "emoji": "🌸"
-    },
-    "versicolor": {
-        "scientific": "Iris versicolor",
-        "common": "Lirio bandera azul · Tamaño intermedio",
-        "emoji": "🌺"
-    },
-    "virginica": {
-        "scientific": "Iris virginica",
-        "common": "Lirio virginiano · La especie más grande",
-        "emoji": "🌷"
-    },
-}
-
 if st.button("🔮  Predecir Especie Floral"):
     features = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
-    pred_idx = loaded_model.predict(features)[0]
-    species  = str(label_encoder.classes_[pred_idx]).lower()
-    info     = SPECIES_INFO.get(species, {"scientific": "Iris " + species, "common": "", "emoji": "🌿"})
+    pred_idx = int(loaded_model.predict(features)[0])
+    info     = SPECIES_INFO.get(pred_idx, {"scientific": "Desconocida", "common": "Índice: " + str(pred_idx), "emoji": "🌿"})
 
     st.markdown(
         "<div class='prediction-card'>"
